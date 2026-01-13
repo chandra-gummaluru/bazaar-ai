@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://chandra-gummaluru.github.io/2025-12-29/bazaar-ai">
-    <img src="https://github.com/user-attachments/assets/2e983ad6-6384-4093-8472-6d06dadddd42" style="width: 100%; max-width: 100%;" />
+    <img src="https://github.com/chandra-gummaluru/bazaar-ai/blob/main/bazaar-demo-gif.gif?raw=true" style="width: 100%; max-width: 100%;" />
   </a>
 </p>
 
