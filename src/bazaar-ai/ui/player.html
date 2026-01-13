@@ -539,7 +539,9 @@ function render() {
     if (!marketData.gameStarted) {
         marketStatusText = marketData.playersReady ? 'Waiting to start' : 'Waiting for players';
     } else if (marketData.isTerminal) {
-        if (marketData.lastAction && marketData.lastAction.player) {
+        if (marketData.botTimeoutPlayer) {
+            marketStatusText = `Closed | ${marketData.botTimeoutPlayer} exceeded timeout`;
+        } else if (marketData.lastAction && marketData.lastAction.player) {
             marketStatusText = `Closed | Round ${marketData.round}: ${marketData.lastAction.player} ${getActionDescriptionHTML(marketData.lastAction)}`;
         } else {
             marketStatusText = 'Closed';
@@ -688,10 +690,8 @@ function render() {
     <div class="text-center">
         <h2 class="text-xl font-bold ancient-title mb-2" style="color: #654321;">Market</h2>
         <div style="color: #654321;">
-            <div class="font-semibold text-lg">${marketData.gameStarted && !marketData.isTerminal ? 'Open' : 'Closed'}</div>
-            <div class="text-base">${marketData.lastAction && marketData.lastAction.player 
-                ? `Round ${marketData.round}: ${marketData.lastAction.player} ${getActionDescriptionHTML(marketData.lastAction)}`
-                : marketData.gameStarted ? 'Market just opened' : 'Waiting for players'}</div>
+            <div class="font-semibold text-lg">${marketData.gameStarted && !marketData.isTerminal && !marketData.botTimeoutPlayer ? 'Open' : 'Closed'}</div>
+            <div class="text-base">${marketStatusText}</div>
         </div>
     </div>
 </div>
@@ -925,7 +925,7 @@ function animateScoreReveal(players) {
         // Add total line at the bottom (initially showing 0)
         const totalLine = document.createElement('div');
         totalLine.className = 'total-line flex justify-between items-center pt-2 font-bold text-xl sm:text-2xl';
-        totalLine.style.cssText = 'border-top: 3px solid #8b4513; margin-top: 0;';
+        totalLine.style.cssText = 'border-top: 3px solid #8b4513; margin-top: 12px;';
         totalLine.innerHTML = `
             <span class="ancient-title" style="color: #654321;">Total</span>
             <span class="total-number coin-icon" style="font-size: 1.5em;">0</span>
@@ -1065,18 +1065,40 @@ function animateScoreReveal(players) {
         );
     }
     
+    // Add timeout penalty if applicable
+    if (marketData.botTimeoutPlayer) {
+        addScoreLine(
+            '<i class="fa-solid fa-stopwatch coin-icon score-icon"></i>Penalty',
+            p => p.name === marketData.botTimeoutPlayer ? -(p.score + 1) : 0,
+            false
+        );
+    }
+    
     // Wait a bit, then show winner badge
     delay += 500;
     setTimeout(() => {
-        const maxScore = Math.max(...players.map(p => p.score));
-        playerSections.forEach(({ wrapper, player }) => {
-            if (player.score === maxScore) {
-                const badge = document.createElement('div');
-                badge.className = 'winner-badge text-center mt-4';
-                badge.innerHTML = '<span class="inline-block px-4 py-2 rounded-full font-bold text-base sm:text-lg ancient-title" style="background: #d4af37; color: #654321; border: 2px solid #8b4513; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);"><i class="fa-solid fa-crown mr-2"></i>WINNER!</span>';
-                wrapper.appendChild(badge);
-            }
-        });
+        // Check if game ended due to timeout
+        if (marketData.botTimeoutPlayer) {
+            playerSections.forEach(({ wrapper, player }) => {
+                if (player.name !== marketData.botTimeoutPlayer) {
+                    const badge = document.createElement('div');
+                    badge.className = 'winner-badge text-center mt-4';
+                    badge.innerHTML = '<span class="inline-block px-4 py-2 rounded-full font-bold text-base sm:text-lg ancient-title" style="background: #d4af37; color: #654321; border: 2px solid #8b4513; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);"><i class="fa-solid fa-crown mr-2"></i>WINNER!</span>';
+                    wrapper.appendChild(badge);
+                }
+            });
+        } else {
+            // Normal game ending - determine winner by score
+            const maxScore = Math.max(...players.map(p => p.score));
+            playerSections.forEach(({ wrapper, player }) => {
+                if (player.score === maxScore) {
+                    const badge = document.createElement('div');
+                    badge.className = 'winner-badge text-center mt-4';
+                    badge.innerHTML = '<span class="inline-block px-4 py-2 rounded-full font-bold text-base sm:text-lg ancient-title" style="background: #d4af37; color: #654321; border: 2px solid #8b4513; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);"><i class="fa-solid fa-crown mr-2"></i>WINNER!</span>';
+                    wrapper.appendChild(badge);
+                }
+            });
+        }
     }, delay);
 }
 

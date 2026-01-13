@@ -641,10 +641,8 @@ function renderGame() {
         if (gameState.isTerminal) {
             // Check if game ended due to timeout
             if (gameState.botTimeoutPlayer) {
-                // The player who timed out loses
-                if (player.name === gameState.botTimeoutPlayer) {
-                    statusPill = '<span class="status-pill px-3 py-1 rounded text-xs font-bold" style="background: #dc2626; color: white;">TIMEOUT</span>';
-                } else {
+                // Only show winner badge for the player who didn't timeout
+                if (player.name !== gameState.botTimeoutPlayer) {
                     statusPill = '<span class="status-pill px-3 py-1 rounded text-xs font-bold ancient-title" style="background: #d4af37; color: #654321;">WINNER</span>';
                 }
             } else {
@@ -941,12 +939,11 @@ function renderGame() {
                     <label class="text-xs font-bold" style="color: #654321;">Timeout:</label>
                     <select id="timeoutSelect" onchange="setBotTimeout(this.value)" class="px-3 py-1.5 rounded-lg border-2 text-xs font-bold cursor-pointer" style="border-color: #8b4513; background: #e8d5b7; color: #654321;">
                         <option value="0" ${(gameState.botTimeout || 30.0) === 0 ? 'selected' : ''}>Off</option>
+                        <option value="1" ${(gameState.botTimeout || 30.0) === 1 ? 'selected' : ''}>1s</option>
+                        <option value="2" ${(gameState.botTimeout || 30.0) === 2 ? 'selected' : ''}>2s</option>
+                        <option value="3" ${(gameState.botTimeout || 30.0) === 3 ? 'selected' : ''}>3s</option>
                         <option value="5" ${(gameState.botTimeout || 30.0) === 5 ? 'selected' : ''}>5s</option>
                         <option value="10" ${(gameState.botTimeout || 30.0) === 10 ? 'selected' : ''}>10s</option>
-                        <option value="30" ${(gameState.botTimeout || 30.0) === 30 ? 'selected' : ''}>30s</option>
-                        <option value="60" ${(gameState.botTimeout || 30.0) === 60 ? 'selected' : ''}>60s</option>
-                        <option value="120" ${(gameState.botTimeout || 30.0) === 120 ? 'selected' : ''}>2min</option>
-                        <option value="300" ${(gameState.botTimeout || 30.0) === 300 ? 'selected' : ''}>5min</option>
                     </select>
                 </div>
                 <div class="h-6 w-px" style="background: #8b4513; opacity: 0.3;"></div>
@@ -1165,7 +1162,7 @@ function animateScoreReveal(players) {
         // Add total line at the bottom (initially showing 0)
         const totalLine = document.createElement('div');
         totalLine.className = 'total-line flex justify-between items-center pt-2 font-bold text-xl sm:text-2xl';
-        totalLine.style.cssText = 'border-top: 3px solid #8b4513; margin-top: 0;';
+        totalLine.style.cssText = 'border-top: 3px solid #8b4513; margin-top: 12px;';
         totalLine.innerHTML = `
             <span class="ancient-title" style="color: #654321;">Total</span>
             <span class="total-number coin-icon" style="font-size: 1.5em;">0</span>
@@ -1297,23 +1294,27 @@ function animateScoreReveal(players) {
         true
     );
     
+    // Add timeout penalty if applicable
+    if (gameState.botTimeoutPlayer) {
+        addScoreLine(
+            '<i class="fa-solid fa-stopwatch coin-icon score-icon"></i>Penalty',
+            p => p.name === gameState.botTimeoutPlayer ? -(p.score + 1) : 0,
+            false
+        );
+    }
+    
     // Wait a bit, then show winner badge
     delay += 500;
     setTimeout(() => {
         // Check if game ended due to timeout
         if (gameState.botTimeoutPlayer) {
             playerSections.forEach(({ wrapper, player }) => {
-                const badge = document.createElement('div');
-                badge.className = 'winner-badge text-center mt-4';
-                
-                if (player.name === gameState.botTimeoutPlayer) {
-                    // Timeout loser
-                    badge.innerHTML = '<span class="inline-block px-4 py-2 rounded-full font-bold text-base sm:text-lg ancient-title" style="background: #dc2626; color: white; border: 2px solid #8b4513; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);"><i class="fa-solid fa-stopwatch mr-2"></i>TIMEOUT</span>';
-                } else {
-                    // Winner by timeout
+                if (player.name !== gameState.botTimeoutPlayer) {
+                    const badge = document.createElement('div');
+                    badge.className = 'winner-badge text-center mt-4';
                     badge.innerHTML = '<span class="inline-block px-4 py-2 rounded-full font-bold text-base sm:text-lg ancient-title" style="background: #d4af37; color: #654321; border: 2px solid #8b4513; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);"><i class="fa-solid fa-crown mr-2"></i>WINNER!</span>';
+                    wrapper.appendChild(badge);
                 }
-                wrapper.appendChild(badge);
             });
         } else {
             // Normal game ending - determine winner by score

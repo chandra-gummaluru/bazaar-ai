@@ -343,7 +343,7 @@ class GameState:
             }
         
         state = self.game.state
-        is_terminal = self.game.terminal(state)
+        is_terminal = self.game.terminal(state) or self.bot_timeout_player is not None
         
         # Market goods
         market_goods = {good_type.name: state.goods[good_type] 
