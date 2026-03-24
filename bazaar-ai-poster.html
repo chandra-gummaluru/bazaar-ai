@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazaar AI Competition Poster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-top: #5a271c;
+            --bg-bottom: #1f0e0b;
+            --brass: #d4af37;
+            --brass-soft: #efcf74;
+            --ink: #4c281b;
+            --paper: #f3d9a8;
+            --paper-2: #f8ead0;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+            --border: #7f3a2a;
+            --stripe-dark: #5f2b1e;
+            --stripe-light: #b56f3d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            font-family: 'Spectral', serif;
+            color: #fff7ea;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(240, 165, 92, 0.2), transparent 28%),
+                radial-gradient(circle at 82% 12%, rgba(255, 214, 130, 0.14), transparent 24%),
+                radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.46), transparent 34%),
+                linear-gradient(180deg, var(--bg-top) 0%, #33150f 52%, var(--bg-bottom) 100%);
+        }
+
+        body {
+            display: grid;
+            place-items: center;
+            padding: 12px 80px;
+        }
+
+        .poster {
+            position: relative;
+            width: 100%;
+            min-height: 620px;
+            overflow: hidden;
+            border: 4px solid rgba(255, 222, 165, 0.18);
+            border-radius: 28px;
+            background: #2a0f09;
+            box-shadow: none;
+        }
+
+        .main-layout {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+            gap: 28px;
+            padding: 10px 46px 30px;
+            align-items: stretch;
+        }
+
+        .poster::before {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            border: none;
+            border-radius: 20px;
+            pointer-events: none;
+        }
+
+        .poster::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 22%, rgba(255, 214, 130, 0.12), transparent 28%),
+                linear-gradient(180deg, rgba(255,255,255,0.03), transparent 20%, transparent 80%, rgba(255,255,255,0.02));
+            pointer-events: none;
+        }
+
+        .hero {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 8px 6px 0;
+        }
+
+        .hero-top-row {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 28px;
+            padding: 18px 46px 0;
+            width: 100%;
+        }
+
+        .sign-wrap {
+            position: relative;
+            width: fit-content;
+            margin: 0;
+            padding-top: 38px;
+        }
+
+        .sign-wrap::before,
+        .sign-wrap::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 38px;
+            background: linear-gradient(180deg, rgba(255, 227, 179, 0.95), rgba(136, 66, 48, 0.34));
+            box-shadow: 0 0 0 1px rgba(78, 36, 25, 0.18);
+        }
+
+        .sign-wrap::before { left: 24px; }
+        .sign-wrap::after { right: 24px; }
+
+        .sign {
+            padding: 16px 30px 18px;
+            border-radius: 14px;
+            border: 2px solid rgba(104, 48, 33, 0.82);
+            background:
+                linear-gradient(180deg, rgba(255, 246, 221, 0.96), rgba(225, 170, 92, 0.92)),
+                repeating-linear-gradient(90deg, rgba(255, 234, 191, 0.16) 0 10px, rgba(127, 58, 42, 0.08) 10px 20px);
+            box-shadow: 0 16px 30px rgba(20, 8, 5, 0.35), inset 0 1px 0 rgba(255,255,255,0.55);
+            color: #4d2619;
+            text-align: center;
+            transform-origin: 50% -38px;
+            animation: signSway 5.8s ease-in-out infinite;
+        }
+
+        .sign .kicker {
+            display: block;
+            font-family: 'Marcellus', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.42em;
+            text-transform: uppercase;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .sign .brand {
+            display: block;
+            font-family: 'Marcellus', serif;
+            font-size: clamp(2rem, 5vw, 3.7rem);
+            line-height: 0.95;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+        }
+
+        .torch-row {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 6px 0 0;
+            min-height: 118px;
+            flex: 0 0 auto;
+        }
+
+        .torch {
+            position: relative;
+            width: 72px;
+            height: 108px;
+            opacity: 0.98;
+        }
+
+        .torch.left {
+            transform: rotate(-16deg);
+        }
+
+        .torch.right {
+            transform: rotate(16deg);
+        }
+
+        .torch-stick {
+            position: absolute;
+            left: 36px;
+            bottom: 0;
+            width: 12px;
+            height: 76px;
+            border-radius: 5px;
+            background: linear-gradient(180deg, #9a6534, #5b311f);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+
+        .torch-cup {
+            position: absolute;
+            left: 24px;
+            bottom: 58px;
+            width: 38px;
+            height: 18px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #d8bc69, #815226);
+            border: 2px solid rgba(76, 38, 20, 0.7);
+            box-shadow: 0 8px 14px rgba(0,0,0,0.24);
+        }
+
+        .flame-glow {
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            width: 62px;
+            height: 78px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 196, 82, 0.42), rgba(240, 122, 31, 0.12) 55%, transparent 72%);
+            filter: blur(6px);
+            animation: glowPulse 1.8s ease-in-out infinite;
+        }
+
+        .flame {
+            position: absolute;
+            left: 23px;
+            top: 14px;
+            width: 36px;
+            height: 54px;
+            border-radius: 60% 60% 48% 48%;
+            background: radial-gradient(circle at 45% 26%, #fff6c5 0 22%, #ffc84b 43%, #ef7e21 74%, rgba(239,126,33,0.15) 100%);
+            transform-origin: 50% 85%;
+            animation: torchFlicker 0.95s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 186, 82, 0.8), 0 0 26px rgba(240, 122, 31, 0.34);
+        }
+
+        .headline {
+            text-align: left;
+            margin: 8px 0 0;
+            max-width: 690px;
+        }
+
+        .headline .eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 8px 16px;
+            border: 1px solid rgba(239, 207, 116, 0.4);
+            border-radius: 999px;
+            background: rgba(255, 222, 165, 0.08);
+            color: #f9dfb0;
+            font-family: 'Marcellus', serif;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .headline h1 {
+            margin: 0;
+            font-family: 'Marcellus', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            line-height: 0.95;
+            font-size: clamp(3.2rem, 6vw, 6.2rem);
+            color: #fff0cf;
+            text-shadow: 0 2px 0 rgba(255, 240, 211, 0.16), 0 12px 30px rgba(0, 0, 0, 0.42);
+        }
+
+        .hero-event-block {
+            margin: 18px 0 0;
+            display: inline-block;
+            max-width: 620px;
+            padding: 18px 22px 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(239, 207, 116, 0.4);
+            background:
+                linear-gradient(180deg, rgba(106, 42, 29, 0.74), rgba(56, 22, 15, 0.88));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 30px rgba(0, 0, 0, 0.24);
+        }
+
+        .hero-event-date {
+            font-family: 'Marcellus', serif;
+            font-size: clamp(1.6rem, 2.3vw, 2.5rem);
+            line-height: 1.05;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #fff0c9;
+        }
+
+        .hero-event-location {
+            margin-top: 8px;
+            font-size: clamp(1.2rem, 1.7vw, 1.55rem);
+            line-height: 1.45;
+            color: rgba(255, 241, 220, 0.94);
+        }
+
+        .headline p {
+            margin: 18px 0 0;
+            max-width: 610px;
+            font-size: clamp(1.02rem, 1.5vw, 1.24rem);
+            line-height: 1.52;
+            color: rgba(255, 241, 220, 0.92);
+        }
+
+        .callout-points {
+            margin: 18px 0 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 14px;
+        }
+
+        .callout-points li {
+            position: relative;
+            padding-left: 28px;
+            font-size: 1.12rem;
+            line-height: 1.5;
+            color: rgba(255, 242, 216, 0.92);
+        }
+
+        .callout-points li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.62em;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--brass-soft), #d08a35);
+            box-shadow: 0 0 0 2px rgba(95, 44, 29, 0.22);
+        }
+
+        .content {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            padding: 0;
+            align-content: start;
+        }
+
+        .parchment {
+            position: relative;
+            padding: 22px 22px 24px;
+            border-radius: 22px;
+            color: var(--ink);
+            background:
+                linear-gradient(165deg, rgba(255, 237, 204, 0.98), rgba(240, 211, 164, 0.95)),
+                repeating-linear-gradient(45deg, rgba(173, 94, 58, 0.05) 0 12px, rgba(255,255,255,0.04) 12px 24px);
+            border: 3px solid var(--border);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 16px 30px rgba(21, 10, 7, 0.3);
+        }
+
+        .parchment::before,
+        .parchment::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(127, 58, 42, 0.44);
+        }
+
+        .parchment::before {
+            top: 10px;
+            left: 10px;
+            border-right: 0;
+            border-bottom: 0;
+        }
+
+        .parchment::after {
+            right: 10px;
+            bottom: 10px;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        .right-col {
+            display: grid;
+            gap: 18px;
+            align-content: end;
+            padding-top: 80px;
+        }
+
+        .callout {
+            position: relative;
+            padding: 32px 28px 36px;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(98, 39, 26, 0.88), rgba(48, 18, 13, 0.95));
+            border: 2px solid rgba(239, 207, 116, 0.38);
+            color: #fff1d5;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .callout h3 {
+            margin: 0 0 14px;
+            font-family: 'Marcellus', serif;
+            font-size: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .callout p {
+            margin: 0;
+            line-height: 1.65;
+            font-size: 1.2rem;
+            color: rgba(255, 242, 216, 0.92);
+        }
+
+        /* ── Pillars ── */
+        .poster-wrap {
+            position: relative;
+            width: min(100%, 1600px);
+        }
+
+        .poster-pillars {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .poster-pillar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 52px;
+            border: 2px solid rgba(96, 44, 31, 0.78);
+            background:
+                linear-gradient(180deg, rgba(255, 238, 202, 0.26), rgba(0, 0, 0, 0.18)),
+                linear-gradient(90deg, rgba(247, 203, 135, 0.22) 0 12%, rgba(99, 41, 29, 0) 12% 88%, rgba(247, 203, 135, 0.22) 88% 100%),
+                repeating-linear-gradient(90deg, rgba(214, 164, 92, 0.5) 0 10px, rgba(116, 52, 34, 0.36) 10px 20px),
+                repeating-linear-gradient(40deg, rgba(255, 227, 176, 0.08) 0 7px, rgba(89, 37, 27, 0) 7px 14px);
+            box-shadow: inset 0 0 0 1px rgba(255, 234, 196, 0.26);
+            opacity: 0.92;
+        }
+
+        .poster-pillar::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            right: -10px;
+            top: -16px;
+            height: 34px;
+            border: 2px solid rgba(94, 43, 30, 0.82);
+            background:
+                radial-gradient(22px 16px at 18% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                radial-gradient(22px 16px at 50% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                radial-gradient(22px 16px at 82% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                linear-gradient(180deg, #f0cd94, #a7603f);
+            box-shadow: 0 6px 10px rgba(20, 7, 4, 0.28), inset 0 1px 0 rgba(255, 238, 207, 0.5);
+        }
+
+        .poster-pillar.pillar-left  { left: -52px; }
+        .poster-pillar.pillar-right { right: -52px; }
+
+        @keyframes torchFlicker {
+            0% { transform: translateY(0) scale(1); opacity: 0.95; }
+            30% { transform: translateY(-1px) scale(1.08, 0.98) rotate(-2deg); opacity: 1; }
+            55% { transform: translateY(0) scale(0.95, 1.06) rotate(1deg); opacity: 0.9; }
+            80% { transform: translateY(-1px) scale(1.04, 0.96) rotate(-1deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 0.95; }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.65; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.04); }
+        }
+
+        @keyframes signSway {
+            0% { transform: rotate(1deg); }
+            50% { transform: rotate(-1deg); }
+            100% { transform: rotate(1deg); }
+        }
+
+        /* ── String of lights ── */
+        .poster-light-strand {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 38px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 46px;
+            box-sizing: border-box;
+            margin-top: -4px;
+        }
+
+        .poster-light-strand::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 26px;
+            border-bottom: 3px solid rgba(95, 42, 31, 0.90);
+            border-radius: 0 0 60% 60%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .poster-bulb {
+            position: relative;
+            width: 12px;
+            height: 16px;
+            border-radius: 48% 48% 56% 56%;
+            border: 1px solid rgba(120, 54, 36, 0.7);
+            background: radial-gradient(circle at 50% 28%, #fff9db 0 30%, #ffc562 58%, #dd7e2d 100%);
+            box-shadow: 0 0 10px rgba(255, 181, 77, 0.68), 0 0 18px rgba(255, 160, 58, 0.4);
+            animation: lightTwinkle 2.4s ease-in-out infinite;
+        }
+
+        .poster-bulb::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -6px;
+            width: 2px;
+            height: 7px;
+            transform: translateX(-50%);
+            background: rgba(95, 42, 31, 0.95);
+        }
+
+        .poster-bulb:nth-child(odd)  { animation-delay: -0.8s; }
+        .poster-bulb:nth-child(3n)   { animation-delay: -1.4s; }
+        .poster-bulb:nth-child(4n)   { animation-duration: 2.85s; }
+        .poster-bulb:nth-child(5n)   { animation-duration: 3.15s; }
+
+        @keyframes lightTwinkle {
+            0%   { opacity: 0.82; filter: brightness(0.98); }
+            24%  { opacity: 0.96; filter: brightness(1.04); }
+            29%  { opacity: 0.72; filter: brightness(0.86); }
+            34%  { opacity: 0.94; filter: brightness(1.02); }
+            58%  { opacity: 1;    filter: brightness(1.06); }
+            74%  { opacity: 0.78; filter: brightness(0.90); }
+            78%  { opacity: 0.92; filter: brightness(1.01); }
+            100% { opacity: 0.82; filter: brightness(0.98); }
+        }
+
+        @media (max-width: 860px) {
+            body {
+                padding: 12px;
+            }
+
+            .poster {
+                min-height: auto;
+            }
+
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                padding: 20px 0 0;
+            }
+
+            .hero,
+            .content {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .right-col {
+                padding-top: 0;
+            }
+
+            .headline {
+                text-align: center;
+                max-width: none;
+            }
+
+            .hero-top-row {
+                gap: 14px;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .headline p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-event-block {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-event-location {
+                text-align: center;
+            }
+
+            .torch-row {
+                min-height: 98px;
+                margin: 6px 0 0;
+            }
+
+            .torch {
+                width: 66px;
+                height: 104px;
+            }
+
+            .footer-copy {
+                position: relative;
+                left: auto;
+                right: auto;
+                bottom: auto;
+                padding: 24px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="poster-wrap">
+    <main class="poster">
+        <div class="hero-top-row">
+            <div class="torch-row" aria-hidden="true">
+                <div class="torch left">
+                    <div class="flame-glow"></div>
+                    <div class="flame"></div>
+                    <div class="torch-cup"></div>
+                    <div class="torch-stick"></div>
+                </div>
+            </div>
+
+            <div class="sign-wrap">
+                <div class="sign">
+                    <span class="kicker">Grand Bazaar</span>
+                    <span class="brand">AI Arena</span>
+                </div>
+            </div>
+
+            <div class="torch-row" aria-hidden="true">
+                <div class="torch right">
+                    <div class="flame-glow"></div>
+                    <div class="flame"></div>
+                    <div class="torch-cup"></div>
+                    <div class="torch-stick"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="poster-light-strand" aria-hidden="true">
+            <span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span><span class="poster-bulb"></span>
+        </div>
+
+        <div class="main-layout">
+            <section class="hero">
+                <div class="headline">
+                    <span class="eyebrow">Hosted by Chandra Gummaluru</span>
+                    <h1>Bazaar AI<br>Showdown</h1>
+                    <div class="hero-event-block">
+                        <div class="hero-event-date">April 02, 3:00 PM</div>
+                        <div class="hero-event-location">MS 3154 (Medical Sciences Building)</div>
+                    </div>
+                    <p>
+                        Autonomous agents enter the market, trade under pressure, and compete for dominance in a live head-to-head strategy battle.
+                    </p>
+            </section>
+
+            <section class="content">
+                <aside class="right-col">
+                    <section class="callout">
+                        <h3>Enter the Market</h3>
+                        <p>
+                            Come see which AI can turn a pile of goods into a pile of gold — no mercy, no hand-holding, just raw strategy.
+                        </p>
+                        <ul class="callout-points">
+                            <li>Agent vs agent competition with no human intervention during play.</li>
+                            <li>Agents built with statistical learning, reinforcement learning, or evolutionary strategies.</li>
+                            <li>Watch the leaderboard shift in real time as the market opens, deals are made, and one agent pulls ahead.</li>
+                        </ul>
+                    </section>
+                </aside>
+            </section>
+        </div>
+
+    </main>
+
+    <div class="poster-pillars" aria-hidden="true">
+        <span class="poster-pillar pillar-left"></span>
+        <span class="poster-pillar pillar-right"></span>
+    </div>
+    </div>
+</body>
+</html>
