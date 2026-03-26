@@ -2686,6 +2686,98 @@
             50% { opacity: 1; transform: translateY(-1px); }
         }
 
+        @keyframes ruleSlideIn {
+            0%   { opacity: 0; transform: translateY(18px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .rule-step {
+            opacity: 0;
+            animation: ruleSlideIn 0.4s ease-out forwards;
+        }
+
+        .rule-step .rule-icon {
+            flex-shrink: 0;
+            width: 54px; height: 54px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #ffe7c3, #efc98f);
+            border: 2px solid #7a3728;
+            color: #5b2a18;
+            font-size: 1.4rem;
+            box-shadow: 0 3px 8px rgba(84, 34, 21, 0.25);
+        }
+
+        .rule-step .rule-body { flex: 1; }
+
+        .rule-step .rule-title {
+            font-family: 'Marcellus', serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #f4d8ab;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            text-align: center;
+        }
+
+        .rule-step .rule-desc {
+            font-size: 1.1rem;
+            color: #d6b888;
+            line-height: 1.55;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .instruction-nav-btn {
+            background: linear-gradient(180deg, #c4813a, #7a3728);
+            border: 2px solid #f4d8ab;
+            color: #f4d8ab;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.25s;
+            box-shadow: 0 3px 10px rgba(84, 34, 21, 0.35);
+        }
+
+        .instruction-nav-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 14px rgba(84, 34, 21, 0.5);
+        }
+
+        #instruction-counter {
+            font-family: 'Marcellus', serif;
+            font-size: 1rem;
+            color: #d6b888;
+            letter-spacing: 0.08em;
+        }
+
+        .htp-inline-panel {
+            max-width: 560px;
+            margin: 8px auto 18px;
+            padding: 18px 24px 20px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(98, 39, 26, 0.72), rgba(48, 18, 13, 0.88));
+            border: 2px solid rgba(239, 207, 116, 0.3);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+            position: relative;
+            z-index: 5;
+        }
+
+        .htp-inline-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-family: 'Marcellus', serif;
+            font-size: 0.82rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: #d4af37;
+        }
+
     </style>
 </head>
 <body class="min-h-screen">
@@ -4693,7 +4785,7 @@ function renderSetupScreen() {
     <div class="bazaar-floor" aria-hidden="true"></div>
     <div class="floor-action-plaque">
         <div id="setup-start-btn" style="display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;">
-            <button onclick="showInstructionsScreen()" class="action-btn px-5 py-3 rounded-lg font-bold text-sm cursor-pointer">
+            <button onclick="showInstructionsScreen()" class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-pointer">
                 <i class="fa-solid fa-scroll mr-2"></i>HOW TO PLAY
             </button>
             ${startButton || ''}
@@ -4972,15 +5064,21 @@ function updateStartButton() {
             ? (gameState && gameState.player1Connected && selectedPlayer2)
             : (gameState && gameState.playersReady));
 
+    const howToPlayButton = `<button onclick="showInstructionsScreen()" class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-pointer">
+                <i class="fa-solid fa-scroll mr-2"></i>HOW TO PLAY
+            </button>`;
+
+    const startButton = canStart
+        ? `<button onclick="sendCommand('start')" class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-pointer">
+            <i class="fa-solid fa-gears mr-2"></i>SETUP GAME
+           </button>`
+        : `<button disabled class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-not-allowed">
+            <i class="fa-solid fa-gears mr-2"></i>SETUP GAME
+           </button>`;
+
     const startButtonContainer = document.getElementById('setup-start-btn');
     if (startButtonContainer) {
-        startButtonContainer.innerHTML = canStart
-            ? `<button onclick="sendCommand('start')" class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-pointer">
-                <i class="fa-solid fa-gears mr-2"></i>SETUP GAME
-               </button>`
-            : `<button disabled class="action-btn px-6 py-3 rounded-lg font-bold text-sm cursor-not-allowed">
-                <i class="fa-solid fa-gears mr-2"></i>SETUP GAME
-               </button>`;
+        startButtonContainer.innerHTML = howToPlayButton + startButton;
     }
 }
 
@@ -5762,7 +5860,7 @@ async function showInstructionsScreen() {
             <span class="hanging-lantern lantern-right"></span>
         </div>
 
-        <div class="w-full game-shell screen-shell-fit" style="display: flex; flex-direction: column; padding-top: 0; padding-bottom: 0;">
+        <div class="w-full pb-20 pt-14 game-shell screen-shell-fit" style="display: flex; flex-direction: column;">
             <div class="bazaar-overlay" aria-hidden="true"></div>
             <div class="bazaar-canopy" aria-hidden="true"></div>
             <div class="bazaar-floor" aria-hidden="true"></div>
@@ -5773,7 +5871,7 @@ async function showInstructionsScreen() {
             </div>
             ${getBazaarInteriorDecorHtml()}
 
-            <div class="relative" style="margin-top: 16px; margin-bottom: 8px;">
+            <div class="relative mb-6 setup-header-layer">
                 <div class="market-sign" aria-hidden="true"><span>How to Play</span></div>
             </div>
 
