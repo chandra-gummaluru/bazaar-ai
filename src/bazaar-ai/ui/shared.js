@@ -292,6 +292,7 @@ function getPlayerStripHtml({
     shouldLightTorch = false,
     nameplateStateClass = '',
     handRailHtml = '',
+    camelSlotHtml = '',
     handRailId = '',
     statPrefix = 'hstat'
 } = {}) {
@@ -321,6 +322,7 @@ function getPlayerStripHtml({
                         </div>
                     </div>
                 </div>
+                <div class="player-camel-slot">${camelSlotHtml}</div>
                 <div${handRailIdAttr} class="player-hand-rail">${handRailHtml}</div>
             </div>
         </div>

@@ -551,11 +551,11 @@
         }
 
         .game-shell.market-view-shell .player-hero-left .player-hand-rail {
-            transform: translateX(-118px) translateY(-100px);
+            transform: translateX(-178px) translateY(-100px);
         }
 
         .game-shell.market-view-shell .player-hero-right .player-hand-rail {
-            transform: translateX(118px) translateY(-100px);
+            transform: translateX(178px) translateY(-100px);
         }
 
         .game-shell.market-view-shell .stack-board {
@@ -1251,6 +1251,42 @@
             z-index: 1;
         }
 
+        .player-camel-slot {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-self: flex-end;
+            margin-bottom: -40px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .player-camel-slot::before,
+        .player-camel-slot::after {
+            content: '';
+            position: absolute;
+            top: -36px;
+            width: 2px;
+            height: 36px;
+            background: linear-gradient(180deg, rgba(248, 223, 180, 0.95), rgba(120, 56, 41, 0.38));
+            box-shadow: 0 0 0 1px rgba(78, 36, 25, 0.16);
+            z-index: -1;
+        }
+
+        .player-camel-slot::before { left: 16px; }
+        .player-camel-slot::after  { right: 16px; }
+
+        .player-hero-left .player-camel-slot {
+            margin-left: 80px;
+            margin-right: -20px;
+        }
+
+        .player-hero-right .player-camel-slot {
+            margin-right: 80px;
+            margin-left: -20px;
+        }
+
         .player-hand-rail {
             flex: 1 1 auto;
             min-width: 0;
@@ -1268,7 +1304,7 @@
             content: '';
             position: absolute;
             left: 50%;
-            width: clamp(380px, 64vw, 620px);
+            width: clamp(480px, 72vw, 740px);
             bottom: 2px;
             height: 20px;
             transform: translateX(-50%);
@@ -1286,7 +1322,7 @@
             content: '';
             position: absolute;
             left: 50%;
-            width: clamp(340px, 58vw, 580px);
+            width: clamp(440px, 66vw, 700px);
             bottom: -8px;
             height: 14px;
             transform: translateX(-50%);
@@ -1308,20 +1344,21 @@
 
         .player-hero-left .player-hand-rail {
             justify-content: flex-start;
-            padding-left: 28px;
+            padding-left: 0;
+            padding-right: 28px;
             top: -4px;
-            transform: translateX(-118px);
+            transform: translateX(-178px);
         }
 
         .player-hero-left .player-hand-rail::before {
-            left: 10px;
+            left: -50px;
             right: -98px;
             width: auto;
             transform: none;
         }
 
         .player-hero-left .player-hand-rail::after {
-            left: 22px;
+            left: -38px;
             right: -78px;
             width: auto;
             transform: none;
@@ -1329,21 +1366,22 @@
 
         .player-hero-right .player-hand-rail {
             justify-content: flex-end;
-            padding-right: 28px;
+            padding-left: 28px;
+            padding-right: 0;
             top: -4px;
-            transform: translateX(118px);
+            transform: translateX(178px);
         }
 
         .player-hero-right .player-hand-rail::before {
             left: -98px;
-            right: 10px;
+            right: -50px;
             width: auto;
             transform: none;
         }
 
         .player-hero-right .player-hand-rail::after {
             left: -78px;
-            right: 22px;
+            right: -38px;
             width: auto;
             transform: none;
         }
@@ -2437,8 +2475,8 @@
         }
 
         .camel-slot-wrap .goods-card {
-            width: 100%;
-            height: 100%;
+            width: 70px;
+            height: 96px;
         }
 
         .camel-slot-wrap.is-empty .goods-card {
@@ -5232,11 +5270,7 @@ function renderGame() {
             </div>
         `;
 
-        const handRailCards = idx === 0
-            ? `${camelSlotCard}${handCards}`
-            : `${handCards}${camelSlotCard}`;
-
-        const visibleHandRail = handRailCards;
+        const visibleHandRail = handCards;
         const baseRevealScore = player.rawScore || 0;
         const shouldShowBaseRevealScore = gameState.isTerminal && (!inPlaceScoreRevealStarted || inPlaceScoreRevealAnimating);
         const visibleScore = hideCardsForClose
@@ -5255,6 +5289,7 @@ function renderGame() {
             shouldLightTorch,
             nameplateStateClass,
             handRailHtml: visibleHandRail,
+            camelSlotHtml: camelSlotCard,
             statPrefix: 'hstat'
         });
     }).map((html, idx) => `<div id="player-board-${idx}">${html}</div>`);
