@@ -62,11 +62,26 @@ class Market(State):
         self.max_player_goods_count = max_player_goods_count
         self.initial_player_goods_count = initial_player_goods_count
         
-        # give each player some goods
+        # give each player some goods (max 2 of same type, except camels)
         for _ in range(initial_player_goods_count):
             for player in self.players:
-                good_type = self.reserved_goods.pop()
-                self.player_goods[player].add(good_type)
+                # Find a valid good (not more than 2 of same type, unless camel)
+                found_valid = False
+                for attempt_idx in range(len(self.reserved_goods)):
+                    good_type = self.reserved_goods.pop()
+                    # Camels are always allowed, others max 2
+                    if good_type == GoodType.CAMEL or self.player_goods[player][good_type] < 2:
+                        self.player_goods[player].add(good_type)
+                        found_valid = True
+                        break
+                    else:
+                        # Put it back at the start of the deck and try again
+                        self.reserved_goods.insert(0, good_type)
+                
+                if not found_valid and self.reserved_goods:
+                    # Couldn't find valid good, just take whatever is available
+                    good_type = self.reserved_goods.pop()
+                    self.player_goods[player].add(good_type)
 
         self.max_goods_count = max_goods_count
         self.goods = Goods()
