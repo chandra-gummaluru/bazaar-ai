@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazaar AI OBS Overlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Marcellus&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset & Base */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #1f0e0b;
+            font-family: 'Spectral', serif;
+        }
+
+        /* Variables */
+        :root {
+            --bg-top: #5a271c;
+            --bg-bottom: #1f0e0b;
+            --brass: #d4af37;
+            --brass-soft: #efcf74;
+            --ink: #4c281b;
+            --paper: #f3d9a8;
+            --paper-2: #f8ead0;
+            --border: #7f3a2a;
+        }
+
+        /* ── Main Container ── */
+        .obs-overlay {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(240, 165, 92, 0.2), transparent 28%),
+                radial-gradient(circle at 82% 12%, rgba(255, 214, 130, 0.14), transparent 24%),
+                radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.46), transparent 34%),
+                linear-gradient(180deg, var(--bg-top) 0%, #33150f 52%, var(--bg-bottom) 100%);
+        }
+
+        /* ── View States ── */
+        .view {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .view.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ── Cover View ── */
+        .cover-view {
+            transform: scale(1.02);
+        }
+
+        .cover-view.active {
+            transform: scale(1);
+        }
+
+        .cover-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            margin-top: -40px;
+        }
+
+        /* Torch Row */
+        .torch-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 60px;
+        }
+
+        .torch {
+            position: relative;
+            width: 72px;
+            height: 108px;
+            opacity: 0.98;
+        }
+
+        .torch.left { transform: rotate(-16deg); }
+        .torch.right { transform: rotate(16deg); }
+
+        .torch-stick {
+            position: absolute;
+            left: 36px;
+            bottom: 0;
+            width: 12px;
+            height: 76px;
+            border-radius: 5px;
+            background: linear-gradient(180deg, #9a6534, #5b311f);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+
+        .torch-cup {
+            position: absolute;
+            left: 24px;
+            bottom: 58px;
+            width: 38px;
+            height: 18px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #d8bc69, #815226);
+            border: 2px solid rgba(76, 38, 20, 0.7);
+            box-shadow: 0 8px 14px rgba(0,0,0,0.24);
+        }
+
+        .flame-glow {
+            position: absolute;
+            left: 10px;
+            top: 8px;
+            width: 62px;
+            height: 78px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 196, 82, 0.42), rgba(240, 122, 31, 0.12) 55%, transparent 72%);
+            filter: blur(6px);
+            animation: glowPulse 1.8s ease-in-out infinite;
+        }
+
+        .flame {
+            position: absolute;
+            left: 23px;
+            top: 14px;
+            width: 36px;
+            height: 54px;
+            border-radius: 60% 60% 48% 48%;
+            background: radial-gradient(circle at 45% 26%, #fff6c5 0 22%, #ffc84b 43%, #ef7e21 74%, rgba(239,126,33,0.15) 100%);
+            transform-origin: 50% 85%;
+            animation: torchFlicker 0.95s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 186, 82, 0.8), 0 0 26px rgba(240, 122, 31, 0.34);
+        }
+
+        /* Sign */
+        .sign-wrap {
+            position: relative;
+            padding-top: 38px;
+        }
+
+        .sign-wrap::before,
+        .sign-wrap::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 38px;
+            background: linear-gradient(180deg, rgba(255, 227, 179, 0.95), rgba(136, 66, 48, 0.34));
+            box-shadow: 0 0 0 1px rgba(78, 36, 25, 0.18);
+        }
+
+        .sign-wrap::before { left: 24px; }
+        .sign-wrap::after { right: 24px; }
+
+        .sign {
+            padding: 18px 36px 20px;
+            border-radius: 14px;
+            border: 2px solid rgba(104, 48, 33, 0.82);
+            background:
+                linear-gradient(180deg, rgba(255, 246, 221, 0.96), rgba(225, 170, 92, 0.92)),
+                repeating-linear-gradient(90deg, rgba(255, 234, 191, 0.16) 0 10px, rgba(127, 58, 42, 0.08) 10px 20px);
+            box-shadow: 0 16px 30px rgba(20, 8, 5, 0.35), inset 0 1px 0 rgba(255,255,255,0.55);
+            color: #4d2619;
+            text-align: center;
+            transform-origin: 50% -38px;
+            animation: signSway 5.8s ease-in-out infinite;
+        }
+
+        .sign .kicker {
+            display: block;
+            font-family: 'Marcellus', serif;
+            font-size: 1rem;
+            letter-spacing: 0.42em;
+            text-transform: uppercase;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .sign .brand {
+            display: block;
+            font-family: 'Marcellus', serif;
+            font-size: 3.2rem;
+            line-height: 0.95;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+        }
+
+        /* Light Strand */
+        .light-strand {
+            position: relative;
+            width: min(85vw, 900px);
+            height: 34px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            margin-top: 4px;
+        }
+
+        .light-strand::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 26px;
+            border-bottom: 3px solid rgba(95, 42, 31, 0.90);
+            border-radius: 0 0 60% 60%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .bulb {
+            position: relative;
+            width: 12px;
+            height: 16px;
+            border-radius: 48% 48% 56% 56%;
+            border: 1px solid rgba(120, 54, 36, 0.7);
+            background: radial-gradient(circle at 50% 28%, #fff9db 0 30%, #ffc562 58%, #dd7e2d 100%);
+            box-shadow: 0 0 10px rgba(255, 181, 77, 0.68), 0 0 18px rgba(255, 160, 58, 0.4);
+            animation: lightTwinkle 2.4s ease-in-out infinite;
+        }
+
+        .bulb::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -6px;
+            width: 2px;
+            height: 7px;
+            transform: translateX(-50%);
+            background: rgba(95, 42, 31, 0.95);
+        }
+
+        .bulb:nth-child(odd)  { animation-delay: -0.8s; }
+        .bulb:nth-child(3n)   { animation-delay: -1.4s; }
+        .bulb:nth-child(4n)   { animation-duration: 2.85s; }
+        .bulb:nth-child(5n)   { animation-duration: 3.15s; }
+
+        /* Headline */
+        .headline {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .headline .eyebrow {
+            display: inline-block;
+            margin-bottom: 12px;
+            padding: 9px 18px;
+            border: 1px solid rgba(239, 207, 116, 0.4);
+            border-radius: 999px;
+            background: rgba(255, 222, 165, 0.08);
+            color: #f9dfb0;
+            font-family: 'Marcellus', serif;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .headline h1 {
+            margin: 0;
+            font-family: 'Marcellus', serif;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            line-height: 0.95;
+            font-size: clamp(4rem, 8vw, 7rem);
+            color: #fff0cf;
+            text-shadow: 0 2px 0 rgba(255, 240, 211, 0.16), 0 12px 30px rgba(0, 0, 0, 0.42);
+        }
+
+        .event-block {
+            margin: 18px 0 0;
+            display: inline-block;
+            padding: 18px 30px 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(239, 207, 116, 0.4);
+            background:
+                linear-gradient(180deg, rgba(106, 42, 29, 0.74), rgba(56, 22, 15, 0.88));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 30px rgba(0, 0, 0, 0.24);
+        }
+
+        .event-date {
+            font-family: 'Marcellus', serif;
+            font-size: clamp(1.8rem, 3vw, 2.8rem);
+            line-height: 1.05;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #fff0c9;
+        }
+
+        .event-location {
+            margin-top: 8px;
+            font-size: clamp(1.3rem, 2vw, 1.7rem);
+            line-height: 1.45;
+            color: rgba(255, 241, 220, 0.94);
+        }
+
+        .headline p {
+            margin: 14px auto 0;
+            max-width: 700px;
+            font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+            line-height: 1.48;
+            color: rgba(255, 241, 220, 0.92);
+        }
+
+        /* ── Bracket View ── */
+        .bracket-view {
+            transform: scale(0.98);
+        }
+
+        .bracket-view.active {
+            transform: scale(1);
+        }
+
+        .bracket-container {
+            width: min(94vw, 1200px);
+            max-height: 94vh;
+            padding: 20px 40px;
+        }
+
+        .bracket-title {
+            text-align: center;
+            font-family: 'Marcellus', serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #fff0c9;
+            margin: 0 0 20px;
+        }
+
+        .bracket-svg-wrap {
+            width: 100%;
+            max-height: 84vh;
+        }
+
+        .bracket-svg-wrap svg {
+            display: block;
+            width: 100%;
+            max-height: 82vh;
+            height: auto;
+        }
+
+        /* ── Rules View ── */
+        .rules-view {
+            transform: scale(0.96);
+        }
+
+        .rules-view.active {
+            transform: scale(1);
+        }
+
+        .rule-sign-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 0;
+        }
+
+        .rule-sign-ropes {
+            display: none;
+        }
+
+        .rule-sign-ropes::before,
+        .rule-sign-ropes::after {
+            content: '';
+            width: 3px;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(248, 223, 180, 0.95), rgba(120, 56, 41, 0.38));
+            box-shadow: 0 0 0 1px rgba(78, 36, 25, 0.16);
+        }
+
+        .rule-sign {
+            position: relative;
+            width: min(96vw, 1240px);
+            padding: 20px 30px 26px;
+            border-radius: 0;
+            border: none;
+            background: none;
+            box-shadow: none;
+            text-align: center;
+            transform: none;
+            animation: none;
+        }
+
+        .rule-number {
+            position: static;
+            width: auto;
+            height: auto;
+            border-radius: 0;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Marcellus', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff2cf;
+            letter-spacing: 0.12em;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            margin-bottom: 12px;
+        }
+
+        .rule-icon-large {
+            display: none;
+        }
+
+        .rule-title {
+            font-family: 'Marcellus', serif;
+            font-size: 2.2rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #fff3d4;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.62);
+            margin-bottom: 18px;
+        }
+
+        .rule-description {
+            font-family: 'Spectral', serif;
+            font-size: 1.6rem;
+            line-height: 1.5;
+            color: rgba(255, 243, 216, 0.97);
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .rule-description strong {
+            color: #fff9eb;
+            font-weight: 600;
+        }
+
+        .rule-visual {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .action-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 18px;
+            border-radius: 10px;
+            border: 1.5px solid #f4d8ab;
+            background: rgba(80, 40, 20, 0.5);
+            color: #f4d8ab;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .mini-card {
+            width: 80px;
+            height: 108px;
+            border-radius: 10px;
+            border: 2px solid #6b2f21;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            color: #fff6e4;
+        }
+
+        .mini-card .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .resource-svg.svg-sm {
+            width: 30px;
+            height: 30px;
+        }
+
+        .ui-badge-svg.ui-badge-sm {
+            width: 32px;
+            height: 32px;
+        }
+
+        .mini-card .label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            opacity: 0.95;
+        }
+
+        .mini-card.diamond { background: #9E1B44; border-color: #F7D4A6; }
+        .mini-card.gold    { background: #B8780A; border-color: #FFE2A9; }
+        .mini-card.silver  { background: #1A6E88; border-color: #BCE1E8; }
+        .mini-card.fabric  { background: #6B28A8; border-color: #D8B7F4; }
+        .mini-card.spice   { background: #3A6E25; border-color: #B8DDA0; }
+        .mini-card.leather { background: #C24A0A; border-color: #FFD4A3; }
+        .mini-card.camel   { background: #B07A37; border-color: #FFE0B4; }
+
+        .mini-coin {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff8ec;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: 2px solid #f4d8ab;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.08)), #9f5a2e;
+        }
+
+        .mini-coin.diamond { border-color: #F7D4A6; background-color: #9E1B44; }
+        .mini-coin.gold    { border-color: #FFE2A9; background-color: #B8780A; }
+        .mini-coin.silver  { border-color: #BCE1E8; background-color: #1A6E88; }
+        .mini-coin.fabric  { border-color: #D8B7F4; background-color: #6B28A8; }
+        .mini-coin.spice   { border-color: #B8DDA0; background-color: #3A6E25; }
+        .mini-coin.leather { border-color: #FFD4A3; background-color: #C24A0A; }
+
+        .bonus-slot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+        }
+
+        .game-token {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f0d4a5;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.08)), #7b3f2d;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.32);
+        }
+
+        .coin-grid {
+            margin-top: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .coin-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .coin-head {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .coin-head .resource-svg.svg-sm {
+            width: 22px;
+            height: 22px;
+        }
+
+        .coin-stack-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .coin-row .name {
+            min-width: 0;
+            text-align: center;
+            color: #fff6e3;
+            font-size: 1rem;
+            font-weight: 600;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+        }
+
+        .rule-counter {
+            display: none;
+        }
+
+        .rule-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(30px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .rule-screen.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        /* ── Animations ── */
+        @keyframes torchFlicker {
+            0% { transform: translateY(0) scale(1); opacity: 0.95; }
+            30% { transform: translateY(-1px) scale(1.08, 0.98) rotate(-2deg); opacity: 1; }
+            55% { transform: translateY(0) scale(0.95, 1.06) rotate(1deg); opacity: 0.9; }
+            80% { transform: translateY(-1px) scale(1.04, 0.96) rotate(-1deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 0.95; }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.65; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.04); }
+        }
+
+        @keyframes signSway {
+            0% { transform: rotate(1deg); }
+            50% { transform: rotate(-1deg); }
+            100% { transform: rotate(1deg); }
+        }
+
+        @keyframes lightTwinkle {
+            0%   { opacity: 0.82; filter: brightness(0.98); }
+            24%  { opacity: 0.96; filter: brightness(1.04); }
+            29%  { opacity: 0.72; filter: brightness(0.86); }
+            34%  { opacity: 0.94; filter: brightness(1.02); }
+            58%  { opacity: 1;    filter: brightness(1.06); }
+            74%  { opacity: 0.78; filter: brightness(0.90); }
+            78%  { opacity: 0.92; filter: brightness(1.01); }
+            100% { opacity: 0.82; filter: brightness(0.98); }
+        }
+
+        /* Pillars */
+        .pillar {
+            position: fixed;
+            top: 40px;
+            bottom: 0;
+            width: 52px;
+            border: 2px solid rgba(96, 44, 31, 0.78);
+            background:
+                linear-gradient(180deg, rgba(255, 238, 202, 0.26), rgba(0, 0, 0, 0.18)),
+                linear-gradient(90deg, rgba(247, 203, 135, 0.22) 0 12%, rgba(99, 41, 29, 0) 12% 88%, rgba(247, 203, 135, 0.22) 88% 100%),
+                repeating-linear-gradient(90deg, rgba(214, 164, 92, 0.5) 0 10px, rgba(116, 52, 34, 0.36) 10px 20px),
+                repeating-linear-gradient(40deg, rgba(255, 227, 176, 0.08) 0 7px, rgba(89, 37, 27, 0) 7px 14px);
+            box-shadow: inset 0 0 0 1px rgba(255, 234, 196, 0.26);
+            opacity: 0.92;
+            z-index: 10;
+        }
+
+        .pillar.left  { left: 28px; }
+        .pillar.right { right: 28px; }
+
+        /* ── Leaderboard View ── */
+        .leaderboard-view {
+            transform: scale(0.98);
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 5vh;
+            padding-bottom: 0;
+        }
+
+        .leaderboard-view.active {
+            transform: scale(1);
+        }
+
+        .lb-container {
+            width: min(94vw, 860px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .lb-bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px 20px;
+            background: linear-gradient(0deg, rgba(20, 7, 4, 0.97) 70%, transparent);
+        }
+
+        .lb-title {
+            font-family: 'Marcellus', serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: #fff0c9;
+            text-align: center;
+            margin: 0;
+        }
+
+        .lb-subtitle {
+            font-family: 'Spectral', serif;
+            font-size: 1rem;
+            color: rgba(212, 175, 55, 0.6);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-top: -10px;
+        }
+
+        .lb-table-wrap {
+            width: 100%;
+            border-radius: 14px;
+            border: 1.5px solid rgba(239, 207, 116, 0.28);
+            background: linear-gradient(180deg, rgba(58, 22, 16, 0.92), rgba(30, 10, 6, 0.96));
+            overflow: hidden;
+        }
+
+        .lb-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Spectral', serif;
+        }
+
+        .lb-table thead tr {
+            border-bottom: 1px solid rgba(239, 207, 116, 0.2);
+        }
+
+        .lb-table th {
+            font-family: 'Marcellus', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 55, 0.65);
+            padding: 12px 20px 10px;
+            text-align: left;
+        }
+
+        .lb-table th:not(:first-child):not(:nth-child(2)) { text-align: center; }
+
+        .lb-table td {
+            padding: 13px 20px;
+            border-bottom: 1px solid rgba(255, 222, 165, 0.06);
+            font-size: 1.15rem;
+            color: rgba(255, 241, 220, 0.88);
+        }
+
+        .lb-table tr:last-child td { border-bottom: none; }
+
+        .lb-table td.lb-rank {
+            font-family: 'Marcellus', serif;
+            font-size: 1.1rem;
+            color: rgba(212, 175, 55, 0.55);
+            width: 52px;
+            text-align: center;
+        }
+
+        .lb-table tr:nth-child(1) td.lb-rank { color: #efcf74; font-size: 1.3rem; }
+        .lb-table tr:nth-child(2) td.lb-rank { color: #c8c8c8; }
+        .lb-table tr:nth-child(3) td.lb-rank { color: #cd7f32; }
+
+        .lb-table td.lb-name {
+            font-family: 'Marcellus', serif;
+            font-size: 1.2rem;
+            color: #fff3d8;
+        }
+
+        .lb-table td.lb-wins,
+        .lb-table td.lb-ties,
+        .lb-table td.lb-losses,
+        .lb-table td.lb-played,
+        .lb-table td.lb-pts {
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            font-size: 1.15rem;
+        }
+
+        .lb-table td.lb-pts {
+            color: #efcf74;
+            font-family: 'Marcellus', serif;
+            font-size: 1.2rem;
+        }
+
+        .lb-table td.lb-wins { color: #a8e8a0; }
+        .lb-table td.lb-ties { color: rgba(255, 220, 130, 0.75); }
+        .lb-table td.lb-losses { color: rgba(255, 150, 120, 0.75); }
+
+        .lb-empty {
+            text-align: center;
+            padding: 36px 20px;
+            font-family: 'Spectral', serif;
+            font-size: 1.1rem;
+            color: rgba(255, 241, 220, 0.35);
+            font-style: italic;
+        }
+
+        .lb-select {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(239, 207, 116, 0.35);
+            background: rgba(58, 22, 16, 0.88);
+            color: #fff3d8;
+            font-family: 'Marcellus', serif;
+            font-size: 1rem;
+            letter-spacing: 0.06em;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .lb-select:focus { border-color: rgba(239, 207, 116, 0.7); }
+
+        .lb-log-btn {
+            padding: 11px 22px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(239, 207, 116, 0.5);
+            background: linear-gradient(180deg, rgba(180, 100, 40, 0.55), rgba(90, 35, 18, 0.80));
+            color: #fff0c9;
+            font-family: 'Marcellus', serif;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .lb-log-btn:hover {
+            background: linear-gradient(180deg, rgba(210, 120, 50, 0.65), rgba(110, 42, 22, 0.88));
+            border-color: rgba(239, 207, 116, 0.8);
+        }
+
+        .lb-reset-btn {
+            padding: 11px 16px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(239, 207, 116, 0.18);
+            background: rgba(60, 20, 12, 0.6);
+            color: rgba(255, 241, 220, 0.4);
+            font-family: 'Marcellus', serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .lb-reset-btn:hover {
+            color: rgba(255, 150, 120, 0.8);
+            border-color: rgba(255, 100, 80, 0.4);
+        }
+
+        .lb-ornament {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: min(94vw, 860px);
+            color: rgba(212, 175, 55, 0.35);
+            font-family: 'Marcellus', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
+        .lb-ornament::before,
+        .lb-ornament::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+        }
+
+        .lb-log-panel {
+            width: min(94vw, 860px);
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .pillar::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            right: -10px;
+            top: -16px;
+            height: 34px;
+            border: 2px solid rgba(94, 43, 30, 0.82);
+            background:
+                radial-gradient(22px 16px at 18% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                radial-gradient(22px 16px at 50% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                radial-gradient(22px 16px at 82% 100%, rgba(255, 231, 188, 0.9) 45%, transparent 46%),
+                linear-gradient(180deg, #f0cd94, #a7603f);
+            box-shadow: 0 6px 10px rgba(20, 7, 4, 0.28), inset 0 1px 0 rgba(255, 238, 207, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="obs-overlay">
+        <!-- Pillars -->
+        <div class="pillar left" aria-hidden="true"></div>
+        <div class="pillar right" aria-hidden="true"></div>
+
+        <!-- Cover View -->
+        <div class="view cover-view active" id="coverView">
+            <div class="cover-content">
+                <div class="torch-row">
+                    <div class="torch left">
+                        <div class="flame-glow"></div>
+                        <div class="flame"></div>
+                        <div class="torch-cup"></div>
+                        <div class="torch-stick"></div>
+                    </div>
+                    <div class="sign-wrap">
+                        <div class="sign">
+                            <span class="kicker">Grand Bazaar</span>
+                            <span class="brand">AI Arena</span>
+                        </div>
+                    </div>
+                    <div class="torch right">
+                        <div class="flame-glow"></div>
+                        <div class="flame"></div>
+                        <div class="torch-cup"></div>
+                        <div class="torch-stick"></div>
+                    </div>
+                </div>
+
+                <div class="light-strand" aria-hidden="true">
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                    <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+                </div>
+
+                <div class="headline">
+                    <span class="eyebrow">Hosted by Chandra Gummaluru</span>
+                    <h1>Bazaar AI<br>Showdown</h1>
+                    <div class="event-block">
+                        <div class="event-date">April 02, 3:15 PM</div>
+                        <div class="event-location">MS 3154 (Medical Sciences Building)</div>
+                    </div>
+                    <p>
+                        A live artificial intelligence competition for statistical, reinforcement, and evolutionary learning agents.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bracket View -->
+        <div class="view bracket-view" id="bracketView">
+            <div class="bracket-container">
+                <h2 class="bracket-title">Tournament Bracket</h2>
+                <div class="bracket-svg-wrap">
+                    <svg viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg" style="font-family:'Marcellus',serif;">
+                        <defs>
+                            <marker id="bArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                                <path d="M2 1L8 5L2 9" fill="none" stroke="rgba(212,175,55,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </marker>
+                        </defs>
+
+                        <!-- Group stage label -->
+                        <text x="400" y="24" text-anchor="middle" font-size="16" letter-spacing="4" fill="rgba(212,175,55,0.6)" font-family="Marcellus,serif">GROUP STAGE</text>
+                        <line x1="60" y1="30" x2="265" y2="30" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+                        <line x1="535" y1="30" x2="740" y2="30" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+
+                        <!-- Group A -->
+                        <rect x="10" y="40" width="175" height="30" rx="5" fill="rgba(100,38,55,0.72)" stroke="rgba(212,175,55,0.38)" stroke-width="0.5"/>
+                        <text x="97" y="59" text-anchor="middle" font-size="16" letter-spacing="2" fill="#efcf74" font-family="Marcellus,serif">GROUP A</text>
+                        <rect x="10" y="74" width="175" height="48" rx="5" fill="rgba(255,222,165,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="0.5"/>
+                        <text x="97" y="94" text-anchor="middle" font-size="17" fill="#fff0c9" font-family="Marcellus,serif">Seed 1</text>
+                        <text x="97" y="113" text-anchor="middle" font-size="14" fill="rgba(255,241,220,0.55)" font-family="Spectral,serif">8 · 9 · 16</text>
+
+                        <!-- Group B -->
+                        <rect x="210" y="40" width="175" height="30" rx="5" fill="rgba(30,80,70,0.72)" stroke="rgba(212,175,55,0.38)" stroke-width="0.5"/>
+                        <text x="297" y="59" text-anchor="middle" font-size="16" letter-spacing="2" fill="#efcf74" font-family="Marcellus,serif">GROUP B</text>
+                        <rect x="210" y="74" width="175" height="48" rx="5" fill="rgba(255,222,165,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="0.5"/>
+                        <text x="297" y="94" text-anchor="middle" font-size="17" fill="#fff0c9" font-family="Marcellus,serif">Seed 2</text>
+                        <text x="297" y="113" text-anchor="middle" font-size="14" fill="rgba(255,241,220,0.55)" font-family="Spectral,serif">7 · 10 · 15</text>
+
+                        <!-- Group C -->
+                        <rect x="415" y="40" width="175" height="30" rx="5" fill="rgba(110,48,22,0.72)" stroke="rgba(212,175,55,0.38)" stroke-width="0.5"/>
+                        <text x="502" y="59" text-anchor="middle" font-size="16" letter-spacing="2" fill="#efcf74" font-family="Marcellus,serif">GROUP C</text>
+                        <rect x="415" y="74" width="175" height="48" rx="5" fill="rgba(255,222,165,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="0.5"/>
+                        <text x="502" y="94" text-anchor="middle" font-size="17" fill="#fff0c9" font-family="Marcellus,serif">Seed 3</text>
+                        <text x="502" y="113" text-anchor="middle" font-size="14" fill="rgba(255,241,220,0.55)" font-family="Spectral,serif">6 · 11 · 14</text>
+
+                        <!-- Group D -->
+                        <rect x="615" y="40" width="175" height="30" rx="5" fill="rgba(100,70,10,0.72)" stroke="rgba(212,175,55,0.38)" stroke-width="0.5"/>
+                        <text x="702" y="59" text-anchor="middle" font-size="16" letter-spacing="2" fill="#efcf74" font-family="Marcellus,serif">GROUP D</text>
+                        <rect x="615" y="74" width="175" height="48" rx="5" fill="rgba(255,222,165,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="0.5"/>
+                        <text x="702" y="94" text-anchor="middle" font-size="17" fill="#fff0c9" font-family="Marcellus,serif">Seed 4</text>
+                        <text x="702" y="113" text-anchor="middle" font-size="14" fill="rgba(255,241,220,0.55)" font-family="Spectral,serif">5 · 12 · 13</text>
+
+                        <!-- Advance note -->
+                        <text x="400" y="142" text-anchor="middle" font-size="13" fill="rgba(212,175,55,0.45)" font-family="Spectral,serif" font-style="italic">Top 2 per group advance</text>
+
+                        <!-- Down arrows -->
+                        <line x1="97"  y1="122" x2="97"  y2="158" stroke="rgba(212,175,55,0.3)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+                        <line x1="297" y1="122" x2="297" y2="158" stroke="rgba(212,175,55,0.3)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+                        <line x1="502" y1="122" x2="502" y2="158" stroke="rgba(212,175,55,0.3)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+                        <line x1="702" y1="122" x2="702" y2="158" stroke="rgba(212,175,55,0.3)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+
+                        <!-- Quarterfinals label -->
+                        <text x="400" y="175" text-anchor="middle" font-size="16" letter-spacing="4" fill="rgba(212,175,55,0.6)" font-family="Marcellus,serif">QUARTERFINALS</text>
+                        <line x1="60" y1="181" x2="240" y2="181" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+                        <line x1="560" y1="181" x2="740" y2="181" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+
+                        <!-- QF1-4 -->
+                        <rect x="10" y="190" width="175" height="32" rx="5" fill="rgba(100,38,55,0.45)" stroke="rgba(212,175,55,0.28)" stroke-width="0.5"/>
+                        <text x="97" y="211" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">1st A  vs  2nd D</text>
+
+                        <rect x="210" y="190" width="175" height="32" rx="5" fill="rgba(30,80,70,0.45)" stroke="rgba(212,175,55,0.28)" stroke-width="0.5"/>
+                        <text x="297" y="211" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">1st B  vs  2nd C</text>
+
+                        <rect x="415" y="190" width="175" height="32" rx="5" fill="rgba(110,48,22,0.45)" stroke="rgba(212,175,55,0.28)" stroke-width="0.5"/>
+                        <text x="502" y="211" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">1st C  vs  2nd B</text>
+
+                        <rect x="615" y="190" width="175" height="32" rx="5" fill="rgba(100,70,10,0.45)" stroke="rgba(212,175,55,0.28)" stroke-width="0.5"/>
+                        <text x="702" y="211" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">1st D  vs  2nd A</text>
+
+                        <!-- QF → SF connectors -->
+                        <path d="M97 222 L97 252 L297 252" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <path d="M502 222 L502 252 L303 252" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <line x1="300" y1="252" x2="300" y2="276" stroke="rgba(212,175,55,0.32)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+
+                        <path d="M297 222 L297 260 L497 260" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <path d="M702 222 L702 260 L503 260" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <line x1="500" y1="260" x2="500" y2="276" stroke="rgba(212,175,55,0.32)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+
+                        <!-- Semifinals label -->
+                        <text x="400" y="293" text-anchor="middle" font-size="16" letter-spacing="4" fill="rgba(212,175,55,0.6)" font-family="Marcellus,serif">SEMIFINALS</text>
+                        <line x1="60" y1="299" x2="240" y2="299" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+                        <line x1="560" y1="299" x2="740" y2="299" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+
+                        <!-- SF1 -->
+                        <rect x="80" y="308" width="230" height="44" rx="6" fill="rgba(255,222,165,0.07)" stroke="rgba(212,175,55,0.32)" stroke-width="0.8"/>
+                        <text x="195" y="327" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">W(QF1)  vs  W(QF3)</text>
+                        <text x="195" y="344" text-anchor="middle" font-size="13" fill="rgba(255,241,220,0.5)" font-family="Spectral,serif">A-side vs C-side</text>
+
+                        <!-- SF2 -->
+                        <rect x="490" y="308" width="230" height="44" rx="6" fill="rgba(255,222,165,0.07)" stroke="rgba(212,175,55,0.32)" stroke-width="0.8"/>
+                        <text x="605" y="327" text-anchor="middle" font-size="15" fill="#fff0c9" font-family="Marcellus,serif">W(QF2)  vs  W(QF4)</text>
+                        <text x="605" y="344" text-anchor="middle" font-size="13" fill="rgba(255,241,220,0.5)" font-family="Spectral,serif">B-side vs D-side</text>
+
+                        <!-- SF → Final -->
+                        <path d="M195 352 L195 384 L400 384" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <path d="M605 352 L605 384 L400 384" fill="none" stroke="rgba(212,175,55,0.22)" stroke-width="0.8"/>
+                        <line x1="400" y1="384" x2="400" y2="404" stroke="rgba(212,175,55,0.4)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+
+                        <!-- Grand Final label -->
+                        <text x="400" y="420" text-anchor="middle" font-size="16" letter-spacing="4" fill="rgba(212,175,55,0.6)" font-family="Marcellus,serif">GRAND FINAL</text>
+                        <line x1="60" y1="426" x2="240" y2="426" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+                        <line x1="560" y1="426" x2="740" y2="426" stroke="rgba(212,175,55,0.22)" stroke-width="0.5"/>
+
+                        <!-- Final box -->
+                        <rect x="165" y="434" width="470" height="58" rx="8" fill="rgba(180,100,30,0.22)" stroke="rgba(212,175,55,0.58)" stroke-width="1.2"/>
+                        <text x="400" y="458" text-anchor="middle" font-size="18" fill="#fff0c9" font-family="Marcellus,serif" letter-spacing="1">W(SF1)  vs  W(SF2)</text>
+                        <text x="400" y="480" text-anchor="middle" font-size="14" fill="rgba(212,175,55,0.65)" font-family="Spectral,serif" font-style="italic">Best of 3</text>
+
+                        <!-- Final → Champion -->
+                        <line x1="400" y1="492" x2="400" y2="512" stroke="rgba(212,175,55,0.4)" stroke-width="0.8" marker-end="url(#bArrow)"/>
+
+                        <!-- Champion -->
+                        <rect x="255" y="516" width="290" height="32" rx="7" fill="rgba(180,130,20,0.35)" stroke="rgba(212,175,55,0.72)" stroke-width="1.5"/>
+                        <text x="400" y="536" text-anchor="middle" font-size="17" fill="#efcf74" font-family="Marcellus,serif" letter-spacing="3">CHAMPION</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rules View -->
+        <div class="view rules-view" id="rulesView">
+            <div class="rule-screen active" data-rule="0">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">1</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="rule-title">Goods and Coin Stacks</div>
+                        <div class="rule-description">
+                            There are <strong>6 goods types</strong>, and each has an associated coin stack taken in <strong>decreasing order</strong> when sold.
+                        </div>
+                        <div class="coin-grid">
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="DIAMOND"></span><span class="name">Ruby</span></div><div class="coin-stack-row"><span class="mini-coin diamond">7</span><span class="mini-coin diamond">7</span><span class="mini-coin diamond">5</span><span class="mini-coin diamond">5</span><span class="mini-coin diamond">5</span></div></div>
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="GOLD"></span><span class="name">Gold</span></div><div class="coin-stack-row"><span class="mini-coin gold">6</span><span class="mini-coin gold">6</span><span class="mini-coin gold">5</span><span class="mini-coin gold">5</span><span class="mini-coin gold">5</span></div></div>
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="SILVER"></span><span class="name">Silver</span></div><div class="coin-stack-row"><span class="mini-coin silver">5</span><span class="mini-coin silver">5</span><span class="mini-coin silver">5</span><span class="mini-coin silver">5</span><span class="mini-coin silver">5</span></div></div>
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="FABRIC"></span><span class="name">Fabric</span></div><div class="coin-stack-row"><span class="mini-coin fabric">5</span><span class="mini-coin fabric">3</span><span class="mini-coin fabric">3</span><span class="mini-coin fabric">2</span><span class="mini-coin fabric">2</span><span class="mini-coin fabric">1</span><span class="mini-coin fabric">1</span></div></div>
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="SPICE"></span><span class="name">Spice</span></div><div class="coin-stack-row"><span class="mini-coin spice">5</span><span class="mini-coin spice">3</span><span class="mini-coin spice">3</span><span class="mini-coin spice">2</span><span class="mini-coin spice">2</span><span class="mini-coin spice">1</span><span class="mini-coin spice">1</span></div></div>
+                            <div class="coin-row"><div class="coin-head"><span class="icon resource-slot" data-good="LEATHER"></span><span class="name">Leather</span></div><div class="coin-stack-row"><span class="mini-coin leather">4</span><span class="mini-coin leather">3</span><span class="mini-coin leather">2</span><span class="mini-coin leather">1</span><span class="mini-coin leather">1</span><span class="mini-coin leather">1</span><span class="mini-coin leather">1</span><span class="mini-coin leather">1</span><span class="mini-coin leather">1</span></div></div>
+                        </div>
+                        <div class="rule-counter">Rule 1 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="1">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">2</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-handshake"></i></div>
+                        <div class="rule-title">Take Your Turn</div>
+                        <div class="rule-description">
+                            On each turn you must do <strong>one</strong> action: <strong>Take</strong> a good, <strong>Trade</strong> goods, or <strong>Sell</strong> goods.
+                        </div>
+                        <div class="rule-visual">
+                            <span class="action-chip">Take</span>
+                            <span class="action-chip">Trade</span>
+                            <span class="action-chip">Sell</span>
+                        </div>
+                        <div class="rule-counter">Rule 2 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="2">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">3</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-hand-holding"></i></div>
+                        <div class="rule-title">Take a Good</div>
+                        <div class="rule-description">
+                            Pick <strong>1 good</strong> from the market and add it to your hand. If you take <strong>Camels</strong>, you must take <strong>all</strong> of them at once. Your hand limit is <strong>7 goods</strong> (camels don't count).
+                        </div>
+                        <div class="rule-visual">
+                            <span class="mini-card diamond"><span class="icon resource-slot" data-good="DIAMOND"></span><span class="label">Ruby</span></span>
+                            <span class="mini-card gold"><span class="icon resource-slot" data-good="GOLD"></span><span class="label">Gold</span></span>
+                            <span class="mini-card silver"><span class="icon resource-slot" data-good="SILVER"></span><span class="label">Silver</span></span>
+                            <span class="mini-card fabric"><span class="icon resource-slot" data-good="FABRIC"></span><span class="label">Fabric</span></span>
+                            <span class="mini-card spice"><span class="icon resource-slot" data-good="SPICE"></span><span class="label">Spice</span></span>
+                            <span class="mini-card leather"><span class="icon resource-slot" data-good="LEATHER"></span><span class="label">Leather</span></span>
+                            <span class="mini-card camel"><span class="icon resource-slot" data-good="CAMEL"></span><span class="label">Camel</span></span>
+                        </div>
+                        <div class="rule-counter">Rule 3 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="3">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">4</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-arrows-rotate"></i></div>
+                        <div class="rule-title">Trade Goods</div>
+                        <div class="rule-description">
+                            Swap <strong>2 or more</strong> goods from your hand (including camels) with an equal number from the market.
+                        </div>
+                        <div class="rule-visual">
+                            <span class="mini-card fabric"><span class="icon resource-slot" data-good="FABRIC"></span><span class="label">Fabric</span></span>
+                            <span class="mini-card spice"><span class="icon resource-slot" data-good="SPICE"></span><span class="label">Spice</span></span>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f4d8ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 4px;flex-shrink:0;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                            <span class="mini-card gold"><span class="icon resource-slot" data-good="GOLD"></span><span class="label">Gold</span></span>
+                            <span class="mini-card silver"><span class="icon resource-slot" data-good="SILVER"></span><span class="label">Silver</span></span>
+                        </div>
+                        <div class="rule-counter">Rule 4 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="4">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">5</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-coins"></i></div>
+                        <div class="rule-title">Sell Goods</div>
+                        <div class="rule-description">
+                            Sell goods of <strong>one type</strong> from your hand to earn coins. <strong>Ruby, Gold and Silver</strong> require selling at least <strong>2</strong>. Higher-value coins are taken first.
+                        </div>
+                        <div class="rule-visual">
+                            <span class="mini-card diamond"><span class="icon resource-slot" data-good="DIAMOND"></span><span class="label">Ruby</span></span>
+                            <span class="mini-card diamond"><span class="icon resource-slot" data-good="DIAMOND"></span><span class="label">Ruby</span></span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4d8ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 4px;flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                            <span class="mini-coin diamond">7</span>
+                            <span class="mini-coin diamond">7</span>
+                        </div>
+                        <div class="rule-counter">Rule 5 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="5">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">6</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="rule-title">Bonus Tokens</div>
+                        <div class="rule-description">
+                            Sell <strong>3, 4, or 5+</strong> goods at once to earn a bonus token worth extra points.
+                        </div>
+                        <div class="rule-visual">
+                            <span class="mini-card spice"><span class="icon resource-slot" data-good="SPICE"></span><span class="label">Spice</span></span>
+                            <span class="mini-card spice"><span class="icon resource-slot" data-good="SPICE"></span><span class="label">Spice</span></span>
+                            <span class="mini-card spice"><span class="icon resource-slot" data-good="SPICE"></span><span class="label">Spice</span></span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4d8ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 4px;flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                            <span class="mini-coin spice">5</span>
+                            <span class="mini-coin spice">3</span>
+                            <span class="mini-coin spice">3</span>
+                            <span class="game-token"><span class="bonus-slot" data-badge="BONUS3"></span></span>
+                        </div>
+                        <div class="rule-counter">Rule 6 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="6">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">7</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-horse-head"></i></div>
+                        <div class="rule-title">Camel Bonus</div>
+                        <div class="rule-description">
+                            At game end, the player with the <strong>most camels</strong> earns <strong>5 bonus points</strong>.
+                        </div>
+                        <div class="rule-visual">
+                            <span class="mini-card camel"><span class="icon resource-slot" data-good="CAMEL"></span><span class="label">Camel</span></span>
+                            <span class="mini-card camel"><span class="icon resource-slot" data-good="CAMEL"></span><span class="label">Camel</span></span>
+                            <span class="mini-card camel"><span class="icon resource-slot" data-good="CAMEL"></span><span class="label">Camel</span></span>
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f4d8ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 4px;flex-shrink:0;"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                            <span class="game-token"><span class="bonus-slot" data-badge="CAMEL"></span></span>
+                        </div>
+                        <div class="rule-counter">Rule 7 of 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rule-screen" data-rule="7">
+                <div class="rule-sign-container">
+                    <div class="rule-sign-ropes"></div>
+                    <div class="rule-sign">
+                        <div class="rule-number">8</div>
+                        <div class="rule-icon-large"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="rule-title">Game End</div>
+                        <div class="rule-description">
+                            The market closes when <strong>3 or more</strong> goods coin stacks are empty, or when the deck runs out. The player with the <strong>most points wins</strong>.
+                        </div>
+                        <div class="rule-counter">Rule 8 of 9</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div class="view leaderboard-view" id="leaderboardView">
+            <div class="lb-container">
+                <h2 class="lb-title">⚔ Standings</h2>
+                <p class="lb-subtitle">Grand Bazaar AI Arena</p>
+
+                <div class="lb-table-wrap">
+                    <table class="lb-table" id="lbTable">
+                        <thead>
+                            <tr>
+                                <th style="width:52px;text-align:center">#</th>
+                                <th>Agent</th>
+                                <th>Pts</th>
+                                <th>W</th>
+                                <th>T</th>
+                                <th>L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lbBody">
+                            <tr><td colspan="6" class="lb-empty">No results yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Log panel pinned to bottom -->
+            <div class="lb-bottom-bar">
+                <div class="lb-ornament">Log Result</div>
+                <div class="lb-log-panel">
+                    <select class="lb-select" id="lbPlayer1Select">
+                        <option value="" disabled selected>Agent 1…</option>
+                    </select>
+                    <select class="lb-select" id="lbResultSelect">
+                        <option value="win">Win / Loss</option>
+                        <option value="tie">Tie</option>
+                    </select>
+                    <select class="lb-select" id="lbPlayer2Select">
+                        <option value="" disabled selected>Agent 2…</option>
+                    </select>
+                    <button class="lb-log-btn" onclick="logResult()">Record</button>
+                    <button class="lb-reset-btn" onclick="resetLeaderboard()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const resourceCardStyles = {
+            DIAMOND: { iconColor: '#ffd5ea' },
+            GOLD:    { iconColor: '#ffe4b0' },
+            SILVER:  { iconColor: '#d6f6ff' },
+            FABRIC:  { iconColor: '#ebccff' },
+            SPICE:   { iconColor: '#d2edbf' },
+            LEATHER: { iconColor: '#ffd7b7' },
+            CAMEL:   { iconColor: '#ffe1bc' }
+        };
+
+        const resourceIconSVG = {
+            DIAMOND: `
+                <path d="M50 14 L79 41 L50 88 L21 41 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+                <path d="M21 41 L79 41 M50 14 L50 88 M34 23 L50 41 L66 23" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            `,
+            GOLD: `
+                <ellipse cx="50" cy="34" rx="22" ry="11" fill="currentColor" opacity="0.95"/>
+                <ellipse cx="50" cy="50" rx="22" ry="11" fill="currentColor" opacity="0.82"/>
+                <ellipse cx="50" cy="66" rx="22" ry="11" fill="currentColor" opacity="0.7"/>
+                <ellipse cx="50" cy="34" rx="22" ry="11" fill="none" stroke="currentColor" stroke-width="4"/>
+            `,
+            SILVER: `
+                <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" stroke-width="6"/>
+                <circle cx="50" cy="50" r="17" fill="none" stroke="currentColor" stroke-width="4" opacity="0.9"/>
+                <path d="M43 40 C45 36, 55 36, 57 40 C55 44, 45 44, 43 48 C45 52, 55 52, 57 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            `,
+            FABRIC: `
+                <path d="M20 65 C30 44, 44 42, 55 52 C64 60, 74 60, 82 50" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+                <path d="M21 49 C31 28, 45 26, 56 36 C65 44, 75 44, 83 34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" opacity="0.85"/>
+            `,
+            SPICE: `
+                <path d="M35 68 C31 52, 41 36, 56 30 C66 26, 74 18, 78 10 C79 24, 74 35, 66 43 C55 53, 50 63, 48 78" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="39" cy="73" r="5" fill="currentColor"/>
+            `,
+            LEATHER: `
+                <path d="M21 28 C30 18, 44 16, 57 20 C67 23, 78 22, 84 16 C84 28, 80 37, 83 47 C86 60, 80 75, 64 80 C50 84, 35 84, 25 75 C16 67, 15 53, 20 43 C24 35, 22 33, 21 28 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+            `,
+            CAMEL: `
+                <path d="M18 63 L26 63 L26 76 M70 63 L78 63 L78 76 M30 63 C30 56, 34 48, 42 48 C46 48, 48 52, 52 52 C56 52, 58 45, 66 45 C74 45, 78 52, 78 60 L78 63 L30 63 Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M66 45 C67 38, 72 33, 78 33 C81 33, 84 35, 86 39" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            `
+        };
+
+        const uiBadgeIconSVG = {
+            BONUS3: `
+                <circle cx="50" cy="50" r="34" fill="currentColor" opacity="0.22"/>
+                <circle cx="50" cy="50" r="31" fill="none" stroke="currentColor" stroke-width="6"/>
+                <path d="M50 28 L67 60 L33 60 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+                <circle cx="50" cy="68" r="4" fill="currentColor"/>
+            `,
+            CAMEL: `
+                <path d="M16 62 L24 62 L24 76 M68 62 L76 62 L76 76 M28 62 C28 55, 33 48, 40 48 C44 48, 47 52, 50 52 C54 52, 57 44, 64 44 C72 44, 76 51, 76 59 L76 62 L28 62 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M64 44 C66 37, 71 32, 77 32 C80 32, 83 34, 85 38" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+            `
+        };
+
+        function getResourceIconSvg(goodType, sizeClass = 'svg-sm') {
+            const style = resourceCardStyles[goodType] || resourceCardStyles.LEATHER;
+            const icon = resourceIconSVG[goodType] || resourceIconSVG.LEATHER;
+            return `
+                <svg class="resource-svg ${sizeClass}" viewBox="0 0 100 100" aria-hidden="true" style="color:${style.iconColor}">
+                    ${icon}
+                </svg>
+            `;
+        }
+
+        function getUiBadgeIconSvg(iconType, sizeClass = 'ui-badge-sm', color = '#d4a85f') {
+            const icon = uiBadgeIconSVG[iconType] || uiBadgeIconSVG.BONUS3;
+            return `
+                <svg class="ui-badge-svg ${sizeClass}" viewBox="0 0 100 100" aria-hidden="true" style="color:${color}">
+                    ${icon}
+                </svg>
+            `;
+        }
+
+        function injectResourceIcons() {
+            document.querySelectorAll('.resource-slot[data-good]').forEach((el) => {
+                const goodType = el.getAttribute('data-good');
+                el.innerHTML = getResourceIconSvg(goodType, 'svg-sm');
+            });
+        }
+
+        function injectBadgeIcons() {
+            document.querySelectorAll('.bonus-slot[data-badge]').forEach((el) => {
+                const badge = el.getAttribute('data-badge');
+                el.innerHTML = getUiBadgeIconSvg(badge, 'ui-badge-sm', '#f3dbb5');
+            });
+        }
+
+        let currentView = 'cover';
+        let currentRule = 0;
+        const totalRules = document.querySelectorAll('.rule-screen').length;
+        const ruleInterval = 8000;
+        let ruleTimer = null;
+        let isRulesPaused = false;
+
+        injectResourceIcons();
+        injectBadgeIcons();
+
+        // ── Leaderboard Storage ──
+        const LB_KEY = 'bazaar_leaderboard';
+
+        function loadLeaderboard() {
+            try {
+                const raw = localStorage.getItem(LB_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch { return {}; }
+        }
+
+        function saveLeaderboard(data) {
+            try { localStorage.setItem(LB_KEY, JSON.stringify(data)); } catch {}
+        }
+
+        let CONTESTANTS = [
+            "Nonexistent",
+            "Oops",
+            "Cognis",
+            "Chocolatepizza",
+            "Braydenkianworking",
+            "Nointelligencefullartificial",
+            "Camelion",
+            "Neuro",
+            "Chowbot",
+            "Shark7",
+            "Harrissashimi",
+            "Mysterious Agent X",
+            "Goldcrusher",
+            "Jaipurpro",
+            "Custom",
+            "Bamadebayo",
+            "Vane",
+            "Alifanfan",
+            "Ken",
+            "Viksworstnightmare",
+            "Eeepy"
+        ];
+
+        function renderLeaderboard() {
+            const data = loadLeaderboard();
+            const rows = CONTESTANTS.map(name => {
+                const d = data[name] || { w: 0, t: 0, l: 0 };
+                const pts = d.w * 3 + d.t * 1;
+                return { name, w: d.w, t: d.t, l: d.l, gp: d.w + d.t + d.l, pts };
+            }).filter(r => r.gp > 0);
+
+            // Sort: points desc, then wins desc, then fewer losses
+            rows.sort((a, b) => b.pts - a.pts || b.w - a.w || a.l - b.l);
+
+            const tbody = document.getElementById('lbBody');
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="lb-empty">No results yet.</td></tr>';
+                return;
+            }
+
+            const medals = ['🥇', '🥈', '🥉'];
+            tbody.innerHTML = rows.map((r, i) => `
+                <tr>
+                    <td class="lb-rank">${medals[i] || (i + 1)}</td>
+                    <td class="lb-name">${r.name}</td>
+                    <td class="lb-pts">${r.pts}</td>
+                    <td class="lb-wins">${r.w}</td>
+                    <td class="lb-ties">${r.t}</td>
+                    <td class="lb-losses">${r.l}</td>
+                </tr>
+            `).join('');
+        }
+
+        function populateSelects() {
+            ['lbPlayer1Select', 'lbPlayer2Select'].forEach((id, idx) => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = `<option value="" disabled selected>Agent ${idx + 1}…</option>`;
+                CONTESTANTS.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    sel.appendChild(opt);
+                });
+            });
+        }
+
+        function logResult() {
+            const p1     = document.getElementById('lbPlayer1Select').value;
+            const p2     = document.getElementById('lbPlayer2Select').value;
+            const result = document.getElementById('lbResultSelect').value;
+            if (!p1 || !p2 || p1 === p2) return;
+
+            const data = loadLeaderboard();
+            if (!data[p1]) data[p1] = { w: 0, t: 0, l: 0 };
+            if (!data[p2]) data[p2] = { w: 0, t: 0, l: 0 };
+
+            if (result === 'tie') {
+                data[p1].t++;
+                data[p2].t++;
+            } else {
+                // p1 is winner, p2 is loser
+                data[p1].w++;
+                data[p2].l++;
+            }
+
+            saveLeaderboard(data);
+            document.getElementById('lbPlayer1Select').value = '';
+            document.getElementById('lbPlayer2Select').value = '';
+            renderLeaderboard();
+        }
+
+        function resetLeaderboard() {
+            if (!confirm('Reset all standings? This cannot be undone.')) return;
+            localStorage.removeItem(LB_KEY);
+            renderLeaderboard();
+        }
+
+        populateSelects();
+        renderLeaderboard();
+
+        function showView(view) {
+            currentView = view;
+            const coverView      = document.getElementById('coverView');
+            const bracketView    = document.getElementById('bracketView');
+            const rulesView      = document.getElementById('rulesView');
+            const leaderboardView = document.getElementById('leaderboardView');
+
+            coverView.classList.remove('active');
+            bracketView.classList.remove('active');
+            rulesView.classList.remove('active');
+            leaderboardView.classList.remove('active');
+
+            if (view === 'cover') {
+                coverView.classList.add('active');
+                stopRulesCycle();
+            } else if (view === 'bracket') {
+                bracketView.classList.add('active');
+                stopRulesCycle();
+            } else if (view === 'rules') {
+                rulesView.classList.add('active');
+                if (!isRulesPaused) {
+                    startRulesCycle();
+                } else {
+                    stopRulesCycle();
+                    showRule(currentRule);
+                }
+            } else if (view === 'leaderboard') {
+                leaderboardView.classList.add('active');
+                stopRulesCycle();
+                renderLeaderboard();
+            }
+        }
+
+        function showRule(index) {
+            const rules = document.querySelectorAll('.rule-screen');
+            rules.forEach((rule, i) => {
+                rule.classList.toggle('active', i === index);
+            });
+        }
+
+        function nextRule() {
+            currentRule = (currentRule + 1) % totalRules;
+            showRule(currentRule);
+        }
+
+        function startRulesCycle() {
+            if (ruleTimer) clearInterval(ruleTimer);
+            showRule(currentRule);
+            ruleTimer = setInterval(nextRule, ruleInterval);
+        }
+
+        function stopRulesCycle() {
+            if (ruleTimer) {
+                clearInterval(ruleTimer);
+                ruleTimer = null;
+            }
+        }
+
+        function cycleViews() {
+            if (currentView === 'cover') {
+                showView('rules');
+            } else if (currentView === 'rules') {
+                showView('bracket');
+            } else {
+                showView('cover');
+            }
+        }
+
+        function toggleRulesPause() {
+            isRulesPaused = !isRulesPaused;
+            if (currentView !== 'rules') return;
+            if (isRulesPaused) {
+                stopRulesCycle();
+            } else {
+                startRulesCycle();
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '1') showView('cover');
+            if (e.key === '2') showView('bracket');
+            if (e.key === '3') showView('rules');
+            if (e.key === '4') showView('leaderboard');
+            if (e.key === 'p' || e.key === 'P') toggleRulesPause();
+            if (e.key === ' ') {
+                e.preventDefault();
+                cycleViews();
+            }
+            // Arrow keys to manually navigate rules when in rules view
+            if (currentView === 'rules') {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    currentRule = (currentRule + 1) % totalRules;
+                    showRule(currentRule);
+                }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    currentRule = (currentRule - 1 + totalRules) % totalRules;
+                    showRule(currentRule);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
